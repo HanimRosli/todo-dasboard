@@ -10,11 +10,16 @@
     </div>
     <div class="row">
         <b-card v-for="(todo) in todos" :key="todo.id" :title="todo.title" class="col-12 mb-3">
-            {{todos.description}}
+            {{todo.description}}
+
+            <div>
+                <b-btn variant="danger" @click="onHandleClickDelete(todo.id)">Delete</b-btn>
+                <b-btn variant="info" @click="onHandleClickUpdate(todo)">Update</b-btn>
+            </div>
         </b-card>
     </div>
 
-    <b-modal id="modal-add-todo" title="Add Todo" @ok="handleOk">
+    <b-modal id="modal-add-todo" title="Add Todo" @hidden="onHandleCancel">
         <b-form>
             <b-form-group label="Title:">
                 <b-form-input v-model="form.title" placeholder="Add title"></b-form-input>
@@ -24,6 +29,21 @@
                 <b-form-textarea id="textarea" v-model="form.description" placeholder="Enter something..." rows="3" max-rows="6"></b-form-textarea>
             </b-form-group>
         </b-form>
+
+        <template v-slot:modal-footer>
+            <div class="w-100">
+                <b-button @click="onHandleCancel">Cancel</b-button>
+
+                <b-button variant="primary" size="sm" class="float-right" @click="onHandleUpdate" v-if="form.id">
+                    Update
+                </b-button>
+
+                <b-button variant="primary" size="sm" class="float-right" @click="onHandleConfirm" v-else>
+                    Confirm
+                </b-button>
+            </div>
+        </template>
+
     </b-modal>
 
 </div>
@@ -49,7 +69,10 @@ export default {
 
     methods: {
         getTodos() {
-            this.$http.get('http://localhost:3000/todos')
+            this.$http({
+                    methods: 'get',
+                    url: '/todos'
+                })
                 .then(res => {
                     this.todos = res.data
                 })
@@ -59,9 +82,58 @@ export default {
             this.$bvModal.show('modal-add-todo')
         },
 
-        handleOk() {
-            console.log('Ok')
+        onHandleConfirm() {
+            this.$http.post(
+                    '/todos',
+                    this.form
+                )
+                .then(() => {
+                    this.form = {
+                        title: '',
+                        description: ''
+                    }
+                    this.$bvModal.hide('modal-add-todo')
+                    this.getTodos()
+                })
+        },
+
+        OnHandleCancel() {
+            this.form = {
+                title: '',
+                description: ''
+            }
+            this.$bvModal.hide('modal-add-todo')
+        },
+
+        onHandleClickDelete(id) {
+            this.$http.delete(`/todos/${id}`)
+                .then(() => {
+                    this.form = {
+                        title: '',
+                        description: ''
+                    }
+                    this.$bvModal.hide('modal-add-todo')
+                    this.getTodos()
+                })
+        },
+
+        onHandleClickUpdate(todo) {
+            this.form = todo
+            this.$bvModal.show('modal-add-todo')
+        },
+
+        onHandleUpdate() {
+            this.$http.patch(`/todos/${this.form.id}`, this.form)
+                .then(() => {
+                    this.form = {
+                        title: '',
+                        description: ''
+                    }
+                    this.$bvModal.hide('modal-add-todo')
+                    this.getTodos()
+                })
         }
+
     },
 };
 </script>

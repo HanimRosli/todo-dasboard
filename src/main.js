@@ -13,7 +13,9 @@ Vue.config.productionTip = false;
 Vue.use(BootstrapVue)
 Vue.use(IconsPlugin)
 
-Vue.prototype.$http = axios
+Vue.prototype.$http = axios.create({
+  baseURL: process.env.VUE_APP_BACKEND_API
+})
 
 new Vue({
   router,
